@@ -1,0 +1,96 @@
+# 📌 Step 1: Import Libraries
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.utils import to_categorical
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.models import load_model
+import cv2
+
+# 📁 Step 2: Load Dataset
+dataset_path = 'leapGestRecog'  # Upload your dataset here in this directory
+image_size = (64, 64)
+gestures = sorted(os.listdir(dataset_path))
+
+X, y = [], []
+
+for label, gesture in enumerate(gestures):
+    gesture_path = os.path.join(dataset_path, gesture)
+    for img_file in os.listdir(gesture_path):
+        if img_file.endswith('.png'):
+            img_path = os.path.join(gesture_path, img_file)
+            img = load_img(img_path, target_size=image_size, color_mode='grayscale')
+            img_array = img_to_array(img)
+            X.append(img_array)
+            y.append(label)
+
+X = np.array(X) / 255.0
+y = to_categorical(y)
+X.shape, y.shape
+
+# 📊 Step 3: Split Dataset
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 🧠 Step 4: Build CNN Model
+model = Sequential([
+    Conv2D(32, (3,3), activation='relu', input_shape=(64,64,1)),
+    MaxPooling2D(2,2),
+    Conv2D(64, (3,3), activation='relu'),
+    MaxPooling2D(2,2),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dropout(0.3),
+    Dense(10, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.summary()
+
+# 🏋️ Step 5: Train Model
+history = model.fit(X_train, y_train, epochs=10, batch_size=64, validation_data=(X_test, y_test))
+
+# 📈 Step 6: Accuracy Graph
+plt.plot(history.history['accuracy'], label='Train Acc')
+plt.plot(history.history['val_accuracy'], label='Val Acc')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.grid()
+plt.show()
+
+# 💾 Step 7: Save Model
+model.save('gesture_model.h5')
+
+# 🎥 Step 8: Real-Time Detection via Webcam (Run only locally, not in Colab)
+model = load_model('gesture_model.h5')
+gesture_labels = ['palm', 'l', 'fist', 'fist_moved', 'thumb', 'index', 'ok', 'palm_moved', 'c', 'down']
+
+def preprocess(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    resized = cv2.resize(gray, (64, 64))
+    reshaped = resized.reshape(1, 64, 64, 1) / 255.0
+    return reshaped
+
+cap = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = cap.read()
+    if not ret: break
+    roi = frame[100:300, 100:300]
+    input_data = preprocess(roi)
+    pred = model.predict(input_data)
+    class_index = np.argmax(pred)
+    label = gesture_labels[class_index]
+
+    cv2.rectangle(frame, (100,100), (300,300), (0,255,0), 2)
+    cv2.putText(frame, f"Prediction: {label}", (100,90), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,255), 2)
+    cv2.imshow("Hand Gesture Recognition", frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
