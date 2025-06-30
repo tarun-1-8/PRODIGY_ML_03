@@ -32,6 +32,21 @@ We used the [LeapGestRecog](https://www.kaggle.com/datasets/gti-upm/leapgestreco
 - Successfully implemented real-time hand gesture detection using webcam.
 - Demonstrated gesture-based interaction with the system.
 
+---
+
+## 📬 Connect with Me:
+
+**Tarun Sharma**  
+B.Tech CSE | K.R. Mangalam University  
+Machine Learning Intern @ Prodigy InfoTech  
+GitHub: [tarun-1-8](https://github.com/tarun-1-8)  
+LinkedIn: [Tarun Sharma](www.linkedin.com/in/
+tarun-sharma-987a6332b)
+
+---
+
+
+
 
 
 
